@@ -36,16 +36,6 @@ export default defineNuxtConfig({
     autoLastmod: true,
   },
 
-  gtag: {
-    id: process.env.NUXT_PUBLIC_GA_ID,
-  },
-
-  vite: {
-    optimizeDeps: {
-      include: ["@vue/devtools-core", "@vue/devtools-kit"],
-    },
-  },
-
   nitro: {
     compressPublicAssets: true,
   },
@@ -64,6 +54,27 @@ export default defineNuxtConfig({
     },
   },
 
+  $production: {
+    scripts: {
+      // registry: {
+      //   cloudflareWebAnalytics: {
+      //     token: "",
+      //     trigger: "",
+      //   },
+      //   googleAnalytics: {
+      //     id: process.env.NUXT_PUBLIC_GA_ID,
+      //     trigger: "manual",
+      //   },
+      // },
+    },
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: ["@vue/devtools-core", "@vue/devtools-kit"],
+    },
+  },
+
   modules: [
     "motion-v/nuxt",
     "@nuxt/a11y",
@@ -73,8 +84,8 @@ export default defineNuxtConfig({
     "@nuxt/ui",
     "@nuxtjs/i18n",
     "@nuxtjs/seo",
-    "nuxt-gtag",
     "@pinia/nuxt",
     "nuxt-security",
+    "@nuxt/scripts",
   ],
 });
