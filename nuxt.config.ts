@@ -1,6 +1,14 @@
 const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || "https://example.com";
 const siteName =
-  process.env.NUXT_PUBLIC_SITE_NAME || "Nuxt E-Commerce Starter Kit";
+  process.env.NUXT_PUBLIC_SITE_NAME || "Etalase";
+
+// Routes exist unprefixed (default locale "id") and under "/en".
+const localized = (path: string) => [path, `/en${path === "/" ? "" : path}`];
+
+// Pages that render per-visitor state (session, cart, wishlist) are client-rendered
+// so cached HTML never contains one visitor's data, and are kept out of search indexes.
+const privatePages = ["/cart", "/checkout", "/checkout/**", "/account", "/wishlist"].flatMap(localized);
+const authPages = ["/auth/login", "/auth/register"].flatMap(localized);
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
@@ -17,7 +25,10 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Upstream commerce API. Swap for your own backend; only server/ talks to it.
+    dummyjsonUrl: "https://dummyjson.com",
     public: {
+      currency: "USD",
       siteUrl,
       siteName,
     },
@@ -30,27 +41,33 @@ export default defineNuxtConfig({
 
   image: {
     format: ["webp", "avif"],
+    domains: ["cdn.dummyjson.com", "dummyjson.com"],
   },
 
   sitemap: {
     autoLastmod: true,
+    exclude: [...privatePages, ...authPages],
   },
 
   nitro: {
     compressPublicAssets: true,
+    // Product images are remote and optimised on demand; don't try to prerender them.
+    prerender: { ignore: ["/_ipx"] },
   },
 
   routeRules: {
-    "/": {
-      prerender: true,
-    },
+    ...Object.fromEntries(localized("/").map((p) => [p, { prerender: true }])),
+    ...Object.fromEntries(
+      ["/products", "/products/**"].flatMap(localized).map((p) => [p, { swr: 3600 }]),
+    ),
+    ...Object.fromEntries(privatePages.map((p) => [p, { ssr: false, robots: false }])),
+    ...Object.fromEntries(authPages.map((p) => [p, { robots: false }])),
 
-    "/products/**": {
-      swr: 3600,
-    },
-
-    "/categories/**": {
-      swr: 3600,
+    // Image optimisation requests are numerous per page; don't let them drain the
+    // global rate limit. Auth endpoints get a much tighter one.
+    "/_ipx/**": { security: { rateLimiter: false } },
+    "/api/auth/**": {
+      security: { rateLimiter: { tokensPerInterval: 10, interval: 60_000 } },
     },
   },
 
@@ -92,10 +109,10 @@ export default defineNuxtConfig({
   },
 
   i18n: {
-    defaultLocale: "en",
+    defaultLocale: "id",
     locales: [
-      { code: "en", language: "en-US", name: "English", file: "en.json" },
       { code: "id", language: "id-ID", name: "Bahasa Indonesia", file: "id.json" },
+      { code: "en", language: "en-US", name: "English", file: "en.json" },
     ],
   },
 
