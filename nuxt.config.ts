@@ -67,6 +67,36 @@ export default defineNuxtConfig({
       //   },
       // },
     },
+
+    // Strip console/debugger from client bundles via Vite 8's oxc minifier
+    // (nuxt-security's removeLoggers sets esbuild options that Vite 8 ignores).
+    vite: {
+      $client: {
+        build: {
+          rolldownOptions: {
+            output: {
+              minify: {
+                compress: { dropConsole: true, dropDebugger: true },
+                mangle: true,
+                codegen: true,
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+
+  security: {
+    removeLoggers: false,
+  },
+
+  i18n: {
+    defaultLocale: "en",
+    locales: [
+      { code: "en", language: "en-US", name: "English", file: "en.json" },
+      { code: "id", language: "id-ID", name: "Bahasa Indonesia", file: "id.json" },
+    ],
   },
 
   vite: {
